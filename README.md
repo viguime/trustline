@@ -205,15 +205,30 @@ All three accounts share the same password.
 
 ---
 
-### Step 2 — Copy the company's magic link
+### Step 2 — Find the company's reporting URL
 
-In the sidebar you will see a **Magic Link** section with the public reporting URL for your company:
+Each company gets a unique reporting URL containing a **slug + random suffix** (e.g. `acme-corporation-a3f8c2d1`). The token is generated fresh every time `npm run seed` runs, so there is no fixed URL to hardcode.
+
+**Two ways to get the URL:**
+
+**Option A — From the seed output (easiest)**  
+`npm run seed` prints all URLs at the end of its output:
 
 ```
-http://localhost:3000/report/<token>
+  REPORTING URLS (paste in an incognito window to submit a report)
+  ────────────────────────────────────────────────────────────
+  Acme Corporation
+  http://localhost:3000/report/acme-corporation-a3f8c2d1
+
+  Globex Industries
+  http://localhost:3000/report/globex-industries-9d1e7432
+  ...
 ```
 
-Click **Copy**. The token is randomly generated each time `npm run seed` runs — always copy the live link from the sidebar rather than hardcoding it.
+Copy any URL directly from the terminal.
+
+**Option B — From the dashboard sidebar**  
+Log in as a manager → the **Magic Link** widget in the sidebar shows the URL for that company with a **Copy** button.
 
 ---
 

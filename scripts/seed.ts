@@ -232,12 +232,23 @@ async function seed() {
     console.log(`   • [${(doc.status ?? "new").padEnd(9)}] ${r.company.padEnd(20)} — ${r.title}`);
   }
 
+  // ── Verify data is in DB ──────────────────────────────────────────────────
+  const verified = await Company.find({}).select("name magicLinkToken").lean();
+  console.log(`\n✔  Verified ${verified.length} companies in DB\n`);
+
   // ── Summary ───────────────────────────────────────────────────────────────
   console.log("\n" + "─".repeat(60));
   console.log("  LOGIN CREDENTIALS (all share the same password)");
   console.log("─".repeat(60));
   for (const m of MANAGERS) {
     console.log(`  ${m.email.padEnd(30)} password: ${PASSWORD}`);
+  }
+  console.log("\n  REPORTING URLS (paste in an incognito window to submit a report)");
+  console.log("─".repeat(60));
+  for (const c of verified) {
+    console.log(`  ${c.name}`);
+    console.log(`  ${appUrl}/report/${c.magicLinkToken}`);
+    console.log();
   }
   console.log("─".repeat(60) + "\n");
 
