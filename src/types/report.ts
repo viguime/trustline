@@ -1,4 +1,4 @@
-import type { ReportStatus } from "@/models/Report";
+import type { ReportStatus } from "@/lib/constants/report";
 
 /**
  * Serialised report row returned by GET /api/reports.

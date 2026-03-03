@@ -31,7 +31,7 @@ export async function GET() {
       _id: r._id.toHexString(),
       title: r.title,
       ...(r.category != null ? { category: r.category } : {}),
-      status: r.status,
+      status: r.status as ReportRow["status"],
       isAnonymous: r.isAnonymous,
       contactEmail: r.contactEmail ?? null,
       createdAt: (r.createdAt as Date).toISOString(),

@@ -1,11 +1,8 @@
 import mongoose, { Schema, type InferSchemaType, type Model } from "mongoose";
+import { REPORT_STATUSES, type ReportStatus } from "@/lib/constants/report";
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-export const REPORT_STATUSES = ["new", "in_review", "resolved"] as const;
-export type ReportStatus = (typeof REPORT_STATUSES)[number];
+export { REPORT_STATUSES } from "@/lib/constants/report";
+export type { ReportStatus } from "@/lib/constants/report";
 
 // ---------------------------------------------------------------------------
 // Schema

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { connectToDatabase } from "@/lib/mongodb";
-import { Report, REPORT_STATUSES } from "@/models/Report";
+import { Report } from "@/models/Report";
+import { REPORT_STATUSES } from "@/lib/constants/report";
 import { z } from "zod";
 import mongoose from "mongoose";
 

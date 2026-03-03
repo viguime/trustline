@@ -66,8 +66,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             companyId: user.companyId.toHexString(),
             role: "admin" as const,
           };
-        } catch {
-          // Surface no internal error details to the caller
+        } catch (err) {
+          // Log server-side for debugging; never surface details to the caller
+          console.error("[authorize] unexpected error:", err);
           return null;
         }
       },

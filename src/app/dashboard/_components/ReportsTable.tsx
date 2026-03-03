@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { REPORT_STATUSES, type ReportStatus } from "@/models/Report";
+import { REPORT_STATUSES, type ReportStatus } from "@/lib/constants/report";
 import type { ReportRow } from "@/types/report";
 
 // ---------------------------------------------------------------------------
