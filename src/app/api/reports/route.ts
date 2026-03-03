@@ -3,6 +3,50 @@ import { connectToDatabase } from "@/lib/mongodb";
 import { Company } from "@/models/Company";
 import { Report } from "@/models/Report";
 import { reportFormSchema } from "@/lib/validations/report";
+import { auth } from "@/auth";
+import mongoose from "mongoose";
+import type { ReportRow } from "@/types/report";
+
+// ---------------------------------------------------------------------------
+// GET /api/reports — authenticated, returns reports for the session's company
+// ---------------------------------------------------------------------------
+
+export async function GET() {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    await connectToDatabase();
+
+    const rawReports = await Report.find({
+      companyId: new mongoose.Types.ObjectId(session.user.companyId),
+    })
+      .sort({ createdAt: -1 })
+      .select("title category status isAnonymous contactEmail createdAt")
+      .lean();
+
+    const reports: ReportRow[] = rawReports.map((r) => ({
+      _id: r._id.toHexString(),
+      title: r.title,
+      ...(r.category != null ? { category: r.category } : {}),
+      status: r.status,
+      isAnonymous: r.isAnonymous,
+      contactEmail: r.contactEmail ?? null,
+      createdAt: (r.createdAt as Date).toISOString(),
+    }));
+
+    return NextResponse.json({ reports });
+  } catch (err) {
+    console.error("[GET /api/reports]", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// POST /api/reports — public, accepts magic link token (no auth required)
+// ---------------------------------------------------------------------------
 
 export async function POST(req: NextRequest) {
   // ---------------------------------------------------------------------------
