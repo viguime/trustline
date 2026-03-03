@@ -24,12 +24,63 @@ const patchSchema = z
   });
 
 // ---------------------------------------------------------------------------
-// PATCH /api/reports/[id] — authenticated, status update only
+// Shared route context type
 // ---------------------------------------------------------------------------
 
 interface RouteContext {
   params: Promise<{ id: string }>;
 }
+
+// ---------------------------------------------------------------------------
+// GET /api/reports/[id] — authenticated, returns full report detail
+// ---------------------------------------------------------------------------
+
+export async function GET(_req: NextRequest, { params }: RouteContext) {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return NextResponse.json({ error: "Invalid report ID" }, { status: 400 });
+  }
+
+  try {
+    await connectToDatabase();
+
+    const report = await Report.findOne({
+      _id: new mongoose.Types.ObjectId(id),
+      companyId: new mongoose.Types.ObjectId(session.user.companyId),
+    })
+      .select("title description category status isAnonymous isRead contactEmail createdAt")
+      .lean();
+
+    if (!report) {
+      return NextResponse.json({ error: "Report not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      _id: report._id.toHexString(),
+      title: report.title,
+      description: report.description,
+      ...(report.category != null ? { category: report.category } : {}),
+      status: report.status,
+      isAnonymous: report.isAnonymous,
+      isRead: report.isRead ?? false,
+      contactEmail: report.contactEmail ?? null,
+      createdAt: (report.createdAt as Date).toISOString(),
+    });
+  } catch (err) {
+    console.error(`[GET /api/reports/${id}]`, err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// PATCH /api/reports/[id] — authenticated, status + isRead update
+// ---------------------------------------------------------------------------
 
 export async function PATCH(req: NextRequest, { params }: RouteContext) {
   // -------------------------------------------------------------------------

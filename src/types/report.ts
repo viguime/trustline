@@ -12,5 +12,13 @@ export interface ReportRow {
   isAnonymous: boolean;
   isRead: boolean;
   contactEmail: string | null;
-  createdAt: string; // ISO string — Date serialised over the wire
+  createdAt: string;
+}
+
+/**
+ * Full report detail returned by GET /api/reports/[id].
+ * Extends ReportRow with the full description field.
+ */
+export interface ReportDetail extends ReportRow {
+  description: string;
 }

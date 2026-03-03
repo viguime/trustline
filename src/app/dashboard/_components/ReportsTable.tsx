@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Table,
   TableBody,
@@ -153,13 +154,13 @@ export default function ReportsTable({ reports }: Props) {
               key={r._id}
               className={isRead ? undefined : "bg-primary/5 hover:bg-primary/10"}
             >
-              {/* Title — clicking marks the report as read */}
-              <TableCell
-                className="font-medium cursor-pointer select-none"
-                onClick={() => { if (!isRead) markRead(r._id); }}
-                title={isRead ? undefined : "Click to mark as read"}
-              >
-                <span className="flex items-center gap-2">
+              {/* Title — navigates to detail page and marks as read */}
+              <TableCell className="font-medium">
+                <Link
+                  href={`/dashboard/reports/${r._id}`}
+                  onClick={() => { if (!isRead) markRead(r._id); }}
+                  className="flex items-center gap-2 hover:underline"
+                >
                   {!isRead && (
                     <span
                       className="h-2 w-2 shrink-0 rounded-full bg-primary"
@@ -169,7 +170,7 @@ export default function ReportsTable({ reports }: Props) {
                   <span className={isRead ? "text-foreground/80" : "text-foreground font-semibold"}>
                     {r.title}
                   </span>
-                </span>
+                </Link>
               </TableCell>
 
               <TableCell>
