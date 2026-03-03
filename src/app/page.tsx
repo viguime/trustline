@@ -29,9 +29,13 @@ export default function Home() {
             Secure &amp; anonymous whistleblowing
           </div>
 
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-            Speak up. Stay safe.
+          <h1 className="text-5xl font-bold tracking-tight sm:text-7xl">
+            Trust<span className="text-primary">Line</span>
           </h1>
+
+          <p className="text-xl font-medium tracking-tight text-foreground/80">
+            Speak up. Stay safe.
+          </p>
 
           <p className="text-lg text-muted-foreground">
             TrustLine gives organisations a secure, anonymous channel for
