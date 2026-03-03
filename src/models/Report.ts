@@ -46,6 +46,13 @@ const reportSchema = new Schema(
       enum: REPORT_STATUSES,
       default: "new" satisfies ReportStatus,
     },
+    // Tracks whether the manager has viewed/acknowledged this report.
+    // Defaults to false so every new submission shows as unread in the dashboard.
+    isRead: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
   },
   { timestamps: true }
 );

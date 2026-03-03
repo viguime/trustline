@@ -4,6 +4,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 import { Company } from "@/models/Company";
 import SignOutButton from "./_components/SignOutButton";
 import MagicLinkDisplay from "./_components/MagicLinkDisplay";
+import UnreadBadge from "./_components/UnreadBadge";
 import Link from "next/link";
 import { LayoutDashboard } from "lucide-react";
 
@@ -57,6 +58,7 @@ export default async function DashboardLayout({
           >
             <LayoutDashboard className="h-4 w-4 shrink-0" />
             Reports
+            <UnreadBadge />
           </Link>
         </nav>
 

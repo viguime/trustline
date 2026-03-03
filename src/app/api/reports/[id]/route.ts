@@ -7,14 +7,21 @@ import { z } from "zod";
 import mongoose from "mongoose";
 
 // ---------------------------------------------------------------------------
-// Input schema — status is the only mutable field exposed to managers
+// Input schema — managers can update status and/or mark a report as read
 // ---------------------------------------------------------------------------
 
-const patchSchema = z.object({
-  status: z.enum(REPORT_STATUSES, {
-    message: `Status must be one of: ${REPORT_STATUSES.join(", ")}`,
-  }),
-});
+const patchSchema = z
+  .object({
+    status: z
+      .enum(REPORT_STATUSES, {
+        message: `Status must be one of: ${REPORT_STATUSES.join(", ")}`,
+      })
+      .optional(),
+    isRead: z.boolean().optional(),
+  })
+  .refine((d) => d.status !== undefined || d.isRead !== undefined, {
+    message: "At least one of 'status' or 'isRead' must be provided",
+  });
 
 // ---------------------------------------------------------------------------
 // PATCH /api/reports/[id] — authenticated, status update only
@@ -67,14 +74,18 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
   try {
     await connectToDatabase();
 
+    const updateFields: Record<string, unknown> = {};
+    if (result.data.status !== undefined) updateFields.status = result.data.status;
+    if (result.data.isRead !== undefined) updateFields.isRead = result.data.isRead;
+
     const updated = await Report.findOneAndUpdate(
       {
         _id: new mongoose.Types.ObjectId(id),
         // Ownership check: only the report's company can update it
         companyId: new mongoose.Types.ObjectId(session.user.companyId),
       },
-      { $set: { status: result.data.status } },
-      { new: true, select: "title status updatedAt" },
+      { $set: updateFields },
+      { new: true, select: "title status isRead updatedAt" },
     ).lean();
 
     if (!updated) {
@@ -86,6 +97,7 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
     return NextResponse.json({
       _id: updated._id.toHexString(),
       status: updated.status,
+      isRead: updated.isRead,
     });
   } catch (err) {
     console.error(`[PATCH /api/reports/${id}]`, err);

@@ -10,6 +10,7 @@ export interface ReportRow {
   category?: string;
   status: ReportStatus;
   isAnonymous: boolean;
+  isRead: boolean;
   contactEmail: string | null;
   createdAt: string; // ISO string — Date serialised over the wire
 }

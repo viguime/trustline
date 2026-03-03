@@ -17,7 +17,7 @@ export default async function DashboardPage() {
     companyId: new mongoose.Types.ObjectId(session.user.companyId),
   })
     .sort({ createdAt: -1 })
-    .select("title category status isAnonymous contactEmail createdAt")
+    .select("title category status isAnonymous isRead contactEmail createdAt")
     .lean();
 
   // Serialise Mongoose documents to plain objects safe for client components
@@ -27,6 +27,7 @@ export default async function DashboardPage() {
     ...(r.category != null ? { category: r.category } : {}),
     status: r.status as ReportRow["status"],
     isAnonymous: r.isAnonymous,
+    isRead: r.isRead ?? false,
     contactEmail: r.contactEmail ?? null,
     createdAt: (r.createdAt as Date).toISOString(),
   }));
