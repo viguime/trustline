@@ -1,159 +1,273 @@
 "use client";
 
-import { useActionState, useState } from "react";
-import { submitReport, type ReportFormState } from "./actions";
+import { useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import {
+  reportFormSchema,
+  REPORT_CATEGORIES,
+  REPORT_CATEGORY_LABELS,
+  type ReportFormValues,
+} from "@/lib/validations/report";
+
+// ---------------------------------------------------------------------------
+// Props
+// ---------------------------------------------------------------------------
 
 interface Props {
   token: string;
 }
 
-const initialState: ReportFormState = { success: false, message: "" };
-
-// Shared Tailwind classes for consistency
-const inputClass =
-  "w-full rounded-md border border-input bg-background px-3 py-2 text-sm " +
-  "ring-offset-background placeholder:text-muted-foreground " +
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
-
 export default function ReportForm({ token }: Props) {
-  const [isAnonymous, setIsAnonymous] = useState(true);
+  const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
+  const [serverError, setServerError] = useState("");
 
-  const [state, formAction, isPending] = useActionState(
-    submitReport,
-    initialState,
-  );
+  const form = useForm<ReportFormValues>({
+    resolver: zodResolver(reportFormSchema),
+    defaultValues: {
+      token,
+      title: "",
+      description: "",
+      category: undefined,
+      isAnonymous: true,
+      contactEmail: "",
+    },
+  });
 
-  // Success state — replace the form with a confirmation message
-  if (state.success) {
+  // Watch isAnonymous to conditionally render the email field
+  const isAnonymous = useWatch({ control: form.control, name: "isAnonymous" });
+
+  // -------------------------------------------------------------------------
+  // Submit handler — posts JSON to the API route; companyId resolved server-side
+  // -------------------------------------------------------------------------
+
+  async function onSubmit(values: ReportFormValues) {
+    setServerError("");
+    setSubmitStatus("idle");
+
+    try {
+      const res = await fetch("/api/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+
+      if (res.status === 404) {
+        setServerError("This reporting link is no longer valid.");
+        setSubmitStatus("error");
+        return;
+      }
+
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        setServerError(body.error ?? "An unexpected error occurred. Please try again.");
+        setSubmitStatus("error");
+        return;
+      }
+
+      setSubmitStatus("success");
+    } catch {
+      setServerError("Could not reach the server. Please check your connection.");
+      setSubmitStatus("error");
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Success screen
+  // -------------------------------------------------------------------------
+
+  if (submitStatus === "success") {
     return (
-      <div className="rounded-lg border border-green-500/20 bg-green-500/10 p-8 text-center space-y-2">
+      <div
+        role="status"
+        className="rounded-lg border border-green-500/25 bg-green-500/10 p-8 text-center space-y-3"
+      >
         <h2 className="text-xl font-semibold text-green-700 dark:text-green-400">
           Report Submitted
         </h2>
-        <p className="text-muted-foreground text-sm">
+        <p className="text-sm text-muted-foreground">
           Thank you. Your report has been received and will be reviewed shortly.
         </p>
       </div>
     );
   }
 
+  // -------------------------------------------------------------------------
+  // Form
+  // -------------------------------------------------------------------------
+
   return (
-    <form action={formAction} className="space-y-6">
-      {/* Passes the magic link token; the server action re-validates it to
-          resolve companyId — companyId never touches the client. */}
-      <input type="hidden" name="token" value={token} />
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" noValidate>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* Title                                                               */}
-      {/* ------------------------------------------------------------------ */}
-      <div className="space-y-1.5">
-        <label htmlFor="title" className="text-sm font-medium">
-          Title <span className="text-destructive">*</span>
-        </label>
-        <input
-          id="title"
+        {/* ---------------------------------------------------------------- */}
+        {/* Title                                                             */}
+        {/* ---------------------------------------------------------------- */}
+        <FormField
+          control={form.control}
           name="title"
-          type="text"
-          required
-          maxLength={200}
-          placeholder="Brief summary of the incident"
-          className={inputClass}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Title <span className="text-destructive" aria-hidden>*</span>
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="Brief summary of the incident" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* Description                                                         */}
-      {/* ------------------------------------------------------------------ */}
-      <div className="space-y-1.5">
-        <label htmlFor="description" className="text-sm font-medium">
-          Description <span className="text-destructive">*</span>
-        </label>
-        <textarea
-          id="description"
+        {/* ---------------------------------------------------------------- */}
+        {/* Description                                                       */}
+        {/* ---------------------------------------------------------------- */}
+        <FormField
+          control={form.control}
           name="description"
-          required
-          rows={6}
-          placeholder="Describe the incident in detail…"
-          className={`${inputClass} resize-none`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Description <span className="text-destructive" aria-hidden>*</span>
+              </FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Describe the incident in as much detail as possible…"
+                  className="min-h-36 resize-none"
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>Minimum 20 characters.</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* Category (optional)                                                 */}
-      {/* ------------------------------------------------------------------ */}
-      <div className="space-y-1.5">
-        <label htmlFor="category" className="text-sm font-medium">
-          Category{" "}
-          <span className="text-xs text-muted-foreground">(optional)</span>
-        </label>
-        <input
-          id="category"
+        {/* ---------------------------------------------------------------- */}
+        {/* Category (optional select)                                        */}
+        {/* ---------------------------------------------------------------- */}
+        <FormField
+          control={form.control}
           name="category"
-          type="text"
-          maxLength={100}
-          placeholder="e.g. Financial, Safety, Harassment…"
-          className={inputClass}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Category</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                <FormControl>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a category (optional)" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {REPORT_CATEGORIES.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {REPORT_CATEGORY_LABELS[cat]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* Anonymous toggle                                                    */}
-      {/* ------------------------------------------------------------------ */}
-      <div className="flex items-center gap-3">
-        <input
-          id="isAnonymous"
+        {/* ---------------------------------------------------------------- */}
+        {/* Anonymous toggle                                                  */}
+        {/* ---------------------------------------------------------------- */}
+        <FormField
+          control={form.control}
           name="isAnonymous"
-          type="checkbox"
-          defaultChecked
-          onChange={(e) => setIsAnonymous(e.target.checked)}
-          className="h-4 w-4 rounded border-input accent-primary cursor-pointer"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start gap-3 rounded-md border p-4">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel className="cursor-pointer">Submit anonymously</FormLabel>
+                <FormDescription>
+                  When enabled your identity will not be recorded. Uncheck only
+                  if you wish to be contacted about this report.
+                </FormDescription>
+              </div>
+            </FormItem>
+          )}
         />
-        <label
-          htmlFor="isAnonymous"
-          className="text-sm font-medium cursor-pointer"
-        >
-          Submit anonymously
-        </label>
-      </div>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* Contact email — visible only when NOT anonymous                    */}
-      {/* ------------------------------------------------------------------ */}
-      {!isAnonymous && (
-        <div className="space-y-1.5">
-          <label htmlFor="contactEmail" className="text-sm font-medium">
-            Contact email{" "}
-            <span className="text-xs text-muted-foreground">(optional)</span>
-          </label>
-          <input
-            id="contactEmail"
+        {/* ---------------------------------------------------------------- */}
+        {/* Contact email — shown only when NOT anonymous                    */}
+        {/* ---------------------------------------------------------------- */}
+        {!isAnonymous && (
+          <FormField
+            control={form.control}
             name="contactEmail"
-            type="email"
-            placeholder="you@example.com"
-            className={inputClass}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Contact email <span className="text-destructive" aria-hidden>*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="email"
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Used only to follow up on this report — never shared publicly.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </div>
-      )}
+        )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* Inline error message                                                */}
-      {/* ------------------------------------------------------------------ */}
-      {state.message && !state.success && (
-        <p role="alert" className="text-sm text-destructive">
-          {state.message}
-        </p>
-      )}
+        {/* ---------------------------------------------------------------- */}
+        {/* Server-level error banner                                         */}
+        {/* ---------------------------------------------------------------- */}
+        {submitStatus === "error" && serverError && (
+          <p
+            role="alert"
+            className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive"
+          >
+            {serverError}
+          </p>
+        )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* Submit button                                                       */}
-      {/* ------------------------------------------------------------------ */}
-      <button
-        type="submit"
-        disabled={isPending}
-        className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {isPending ? "Submitting…" : "Submit Report"}
-      </button>
-    </form>
+        {/* ---------------------------------------------------------------- */}
+        {/* Submit                                                            */}
+        {/* ---------------------------------------------------------------- */}
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={form.formState.isSubmitting}
+        >
+          {form.formState.isSubmitting ? "Submitting…" : "Submit Report"}
+        </Button>
+      </form>
+    </Form>
   );
 }
