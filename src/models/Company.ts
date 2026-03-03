@@ -1,5 +1,5 @@
 import mongoose, { Schema, type InferSchemaType, type Model } from "mongoose";
-import { randomBytes } from "node:crypto";
+import { generateMagicLinkToken } from "@/lib/utils/token";
 
 // ---------------------------------------------------------------------------
 // Schema
@@ -25,23 +25,12 @@ const companySchema = new Schema(
 // ---------------------------------------------------------------------------
 // Pre-save hook — generate a cryptographically secure random token
 // Only runs when the document is new (creation only).
-// To rotate a token, call company.magicLinkToken = generateToken(company.name) explicitly.
+// To rotate a token, call company.magicLinkToken = generateMagicLinkToken(company.name) explicitly.
 // ---------------------------------------------------------------------------
-
-function generateToken(name: string): string {
-  // Slug from the company name — lowercase, hyphens only, trimmed
-  const slug = name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-  // 64 bits of randomness — unguessable while still being readable in the URL
-  const random = randomBytes(8).toString("hex");
-  return `${slug}-${random}`;
-}
 
 companySchema.pre("save", async function () {
   if (this.isNew) {
-    this.magicLinkToken = generateToken(this.name);
+    this.magicLinkToken = generateMagicLinkToken(this.name);
   }
 });
 

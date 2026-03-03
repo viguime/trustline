@@ -14,7 +14,8 @@ Employees report concerns via a private magic link — managers review and act i
 5. [MVP Tradeoffs](#mvp-tradeoffs)
 6. [Running Locally](#running-locally)
 7. [Testing the App](#testing-the-app)
-8. [Project Structure](#project-structure)
+8. [Running Tests](#running-tests)
+9. [Project Structure](#project-structure)
 
 ---
 
@@ -290,6 +291,40 @@ Categories rotate through all five types (Financial, HR, Safety, Compliance, Oth
 3. Log in as `manager@globex.dev` — a completely separate set of reports is shown
 
 The API enforces isolation at the query layer: `companyId` always comes from the verified JWT, never from user-supplied input.
+
+---
+
+## Running Tests
+
+The test suite uses **Jest** + **ts-jest** and runs entirely in Node — no browser, no database connection required.
+
+### Run all tests
+
+```bash
+npm test
+```
+
+### Run in watch mode
+
+```bash
+npm test -- --watch
+```
+
+### Generate a coverage report
+
+```bash
+npm run test:coverage
+```
+
+Coverage is collected for `src/lib/utils/**`, `src/lib/validations/**`, and `src/lib/constants/**`.
+
+### What is tested
+
+| File | Tests | What it covers |
+|---|---|---|
+| `src/lib/constants/report.test.ts` | 5 | Status constant values, length, format |
+| `src/lib/utils/token.test.ts` | 11 | `slugify()` edge cases, `generateMagicLinkToken()` format & uniqueness |
+| `src/lib/validations/report.test.ts` | 35 | Zod schema — all fields, boundary values, anonymous/email `superRefine` logic |
 
 ---
 
