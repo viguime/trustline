@@ -136,7 +136,7 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
         companyId: new mongoose.Types.ObjectId(session.user.companyId),
       },
       { $set: updateFields },
-      { new: true, select: "title status isRead updatedAt" },
+      { returnDocument: "after", select: "title status isRead updatedAt" },
     ).lean();
 
     if (!updated) {
