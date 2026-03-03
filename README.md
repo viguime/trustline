@@ -21,7 +21,13 @@ Employees report concerns via a private magic link — managers review and act i
 
 ## Overview
 
-TrustLine is a multi-tenant SaaS that gives every organisation a unique, unguessable reporting link. Employees submit concerns anonymously or with contact details. Managers log in to a protected dashboard to track report status and see unread counts updated via lightweight polling.
+TrustLine is a multi-tenant anonymous whistleblowing SaaS built with Next.js 16 (App Router), TypeScript, MongoDB, and Auth.js v5.
+
+Each company gets a unique magic-link URL (e.g. acme-corporation-3d3a2ca054faed20) that employees use to submit reports without creating an account. Reports can be anonymous or include a contact email, with a category and free-text description validated via Zod.
+
+Company managers log in with credentials and access a private dashboard scoped strictly to their organisation — the companyId is always sourced from the verified JWT, never from user input. The dashboard shows reports in a table with unread highlighting, a live badge that polls for new submissions, and a detail page for each report. Managers can update report status (new → under review → resolved → dismissed).
+
+The codebase uses React Hook Form for form state, shadcn/ui for components, Mongoose for data modelling, and Jest + ts-jest for unit tests covering the Zod validation schema, token generation utility, and status constants.
 
 Built as a focused MVP for a coding challenge. The goal was a production-shaped architecture with sensible security defaults, not feature completeness.
 
